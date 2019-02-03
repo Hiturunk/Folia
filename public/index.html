@@ -3,6 +3,7 @@
     <script>
     var key = 'demo';
     var portfolio = [];
+    var plannerOpen=0;
       function inputStockAPIKEY(){
         var stockAPIKEY = prompt("Please Enter your API key for stock data..","demo");
         key == stockAPIKEY;
@@ -63,14 +64,15 @@
       function parseQuote(ticker,key){
       }
       function renderToolBar(){
-        var tools = ["addFinancialAccountPlanner()","removeAccount()","inputStockAPIKEY()","renderAccountTable()","resetPortfolio()"]
+        var tools = ["addFinancialAccountPlanner().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","renderAccountTable().history","resetPortfolio().power_settings_new"]
         var toolbar = document.createElement("tr");
         toolbar.id="toolbar";
         for(i=0;i<tools.length;i++){
-          var a = document.createElement("img");
-          a.src=tools[i]+".jpg";
-          a.setAttribute("onclick",tools[i]);
-          a.setAttribute("class","toolIcon");
+          var spl = tools[i].split('.');
+          var a = document.createElement("i");
+          a.setAttribute("onclick",spl[0]);
+          a.setAttribute("class","material-icons md-60");
+          a.innerHTML=spl[1];
           toolbar.appendChild(a);
         }
         document.body.appendChild(toolbar);
@@ -97,41 +99,77 @@
         var d = document.getElementById("finAcctPlanner_Apy").value;
         var obj = new FinancialAccount(a,b,c,d);
         portfolio.push(obj);
+        renderAccountTable();
       }
       function addFinancialAccountPlanner(){
+        if(plannerOpen==1){
+          plannerOpen=0;
+          var a = document.getElementById("finAcctPlanner");
+          a.parentElement.removeChild(a);
+        }
+        else{
+        plannerOpen=1;
         var obj = document.createElement("div");
         obj.id="finAcctPlanner";
         obj.appendChild(document.createTextNode("Enter the Name, Institution, Balance, and APY of your new account.."));
+        var nameObj=document.createElement("td");
+        var nameText=document.createTextNode("Name:");
         var name = document.createElement("textarea");
         name.id="finAcctPlanner_Name";
+        nameObj.appendChild(nameText);
+        nameObj.appendChild(name);
+        var instObj = document.createElement("td");
+        var institutionText=document.createTextNode("Bank:");
         var institution = document.createElement("textarea");
         institution.id="finAcctPlanner_Institution";
+        instObj.appendChild(institutionText);
+        instObj.appendChild(institution);
+        var balObj = document.createElement("td");
+        var balanceText=document.createTextNode("Balance");
         var balance = document.createElement("textarea");
         balance.id="finAcctPlanner_Balance";
+        balObj.appendChild(balanceText);
+        balObj.appendChild(balance);
+        var apyObj=document.createElement("td");
+        var apyText=document.createTextNode("APY:");
         var apy = document.createElement("textarea");
         apy.id="finAcctPlanner_Apy"
-        var button = document.createElement("img");
+        apyObj.appendChild(apyText);
+        apyObj.appendChild(apy);
+        var button = document.createElement("i");
         button.setAttribute('onclick','addFinAccount()');
-        button.setAttribute('class',"toolIcon");
-        obj.appendChild(name);
-        obj.appendChild(institution);
-        obj.appendChild(balance);
-        obj.appendChild(apy);
+        button.setAttribute('class',"material-icons md-60");
+        button.innerHTML="star_rate";
+        obj.appendChild(nameObj);
+        obj.appendChild(instObj);
+        obj.appendChild(balObj);
+        obj.appendChild(apyObj);
         obj.appendChild(button);
         document.body.appendChild(obj);
+        }
       }
     </script>
     <style>
-      .toolIcon {
-        height:5em;
-        width:5em;
+      i{
+        height:1em;
+        width:1em;
       }
-      #toolbar {
-        border-width:1em;
-        border-color:gold;
+      #toolbar{
+        border-width:medium;
+        border-style:inset;
+        border-color:black;
         background-color:#9999FF;
       }
+      .material-icons.md-60 { font-size: 60px; }
+      #finAcctPlanner{
+        background-color:gold;
+        border-width:thin;
+        border-color:black;
+        border-style: ridge;
+      }
     </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
   </head>
   <body onload="renderToolBar()">
   </body>
