@@ -1,0 +1,138 @@
+<!doctype html>
+  <head>
+    <script>
+    var key = 'demo';
+    var portfolio = [];
+      function inputStockAPIKEY(){
+        var stockAPIKEY = prompt("Please Enter your API key for stock data..","demo");
+        key == stockAPIKEY;
+      }
+      function simpleInterest(x,apy){
+        return x*apy;
+      }
+      function Portfolio(accounts){
+        this.accounts = accounts;
+      }
+      function FinancialAccount(name,institution,balance,apy){
+      this.name = name;
+      this.institution = institution;
+      this.balance = balance;
+      this.apy = apy;
+      this.projectedMonthlyIncome = function(){
+        return this.balance*this.apy/12;
+      }
+      function BrokerageAccount(name,institution,balance,assets){
+        this.name = name;
+        this.institution = institution;
+        this.balance = balance;
+        this.assets = assets;
+      }
+      function asset(name,price,quantity,dividend,dividendsPerYear){
+        this.name = name;
+        this.price = price;
+        this.livePrice = function(){
+          //future live price function
+        }
+      }
+    }
+      function salary(amt){
+        this.monthly = amt/12;
+        this.yearly = amt;
+      }
+      function getQuote(ticker,key){
+        //Using an API to import a quote..
+        var quote = "";
+        var requestURL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+ticker+'&apikey='+key+'';
+        var request = new XMLHttpRequest();
+          request.open('GET', requestURL);
+          request.responseType='json';
+          request.onload=function(){
+            var data = this.response;
+            if(this.readyState==4&&this.status==200){
+                console.log(data["Global Quote"]["01. symbol"])
+                console.log(data["Global Quote"]["05. price"]);
+                console.log(data);
+              }
+            }
+        request.send();
+      }
+      function resetPortfolio(){
+                var dare = prompt("ARE YOU SURE!? Y=1,N=0","0");
+                if(dare==1){portfolio=[];renderAccountTable()}
+      }
+      function parseQuote(ticker,key){
+      }
+      function renderToolBar(){
+        var tools = ["addFinancialAccountPlanner()","removeAccount()","inputStockAPIKEY()","renderAccountTable()","resetPortfolio()"]
+        var toolbar = document.createElement("tr");
+        toolbar.id="toolbar";
+        for(i=0;i<tools.length;i++){
+          var a = document.createElement("img");
+          a.src=tools[i]+".jpg";
+          a.setAttribute("onclick",tools[i]);
+          a.setAttribute("class","toolIcon");
+          toolbar.appendChild(a);
+        }
+        document.body.appendChild(toolbar);
+      }
+      function renderAccountTable(){
+        var target = document.getElementById("accountTable");
+        if(target){target.parentElement.removeChild(target);}
+        var folia = portfolio;
+        var tableEl = document.createElement("div");
+        tableEl.id="accountTable";
+        for(i=0;i<=portfolio.length;i++){
+          var accountEl = document.createElement("div");
+          if(portfolio[i]){
+          accountEl.innerHTML=JSON.stringify(portfolio[i]);
+          tableEl.appendChild(accountEl);
+        }
+        }
+        document.body.appendChild(tableEl);
+      }
+      function addFinAccount(){
+        var a = document.getElementById("finAcctPlanner_Name").value;
+        var b = document.getElementById("finAcctPlanner_Institution").value;
+        var c = document.getElementById("finAcctPlanner_Balance").value;
+        var d = document.getElementById("finAcctPlanner_Apy").value;
+        var obj = new FinancialAccount(a,b,c,d);
+        portfolio.push(obj);
+      }
+      function addFinancialAccountPlanner(){
+        var obj = document.createElement("div");
+        obj.id="finAcctPlanner";
+        obj.appendChild(document.createTextNode("Enter the Name, Institution, Balance, and APY of your new account.."));
+        var name = document.createElement("textarea");
+        name.id="finAcctPlanner_Name";
+        var institution = document.createElement("textarea");
+        institution.id="finAcctPlanner_Institution";
+        var balance = document.createElement("textarea");
+        balance.id="finAcctPlanner_Balance";
+        var apy = document.createElement("textarea");
+        apy.id="finAcctPlanner_Apy"
+        var button = document.createElement("img");
+        button.setAttribute('onclick','addFinAccount()');
+        button.setAttribute('class',"toolIcon");
+        obj.appendChild(name);
+        obj.appendChild(institution);
+        obj.appendChild(balance);
+        obj.appendChild(apy);
+        obj.appendChild(button);
+        document.body.appendChild(obj);
+      }
+    </script>
+    <style>
+      .toolIcon {
+        height:5em;
+        width:5em;
+      }
+      #toolbar {
+        border-width:1em;
+        border-color:gold;
+        background-color:#9999FF;
+      }
+    </style>
+  </head>
+  <body onload="renderToolBar()">
+  </body>
+</html>
