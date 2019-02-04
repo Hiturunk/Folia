@@ -22,66 +22,89 @@
       function Portfolio(accounts){
         this.accounts = accounts;
       }
-      function FinancialAccount(name,institution,balance,apy){
+      function Bank(name,balance,apy){
       this.name = name;
-      this.institution = institution;
       this.balance = balance;
       this.apy = apy;
       this.projectedMonthlyIncome = function(){
         return this.balance*this.apy/12;
       }
-      function BrokerageAccount(name,institution,balance,assets){
+    }
+      function Broker(name,balance,apy){
         this.name = name;
-        this.institution = institution;
         this.balance = balance;
-        this.assets = assets;
-        //We will pass an array of assets to the brokerageAccount constructor in the future..
+        this.apy = apy;
+        this.assets = [];
+        //We will probably allow to pass an array of assets to the brokerageAccount constructor in the future..though this solution for now makes more sense..
         this.projectedMonthlyIncome = function(){
           var a = 0;
-          for(i=0;i<this.assets.length;i++){
-            a += this.assets[i].projectedMonthlyIncome();
+          if(this.assets.length>0){
+            for(i=0;i<=this.assets.length;i++){
+              if(this.assets[i]){
+              a += this.assets[i].projectedMonthlyIncome();
+            }
+            }
           }
+          a+=this.projectedMonthlyInterest();
           return a;
         }
+        this.projectedMonthlyInterest=function(){
+          return this.apy*this.balance/12;
+        }
+        this.addAsset = function(assetObj){
+          this.assets.push(assetObj);
+          console.log("asset added to"+this.name);
+        }
+        this.removeAsset = function(id){
+          for(i=0;i<=this.assets.length;i++){
+            if(this.assets[i].name===id){
+              this.assets.splice(i,1);
+            }
+          }
+        }
       }
-      function asset(name,price,quantity,dividend,dividendsPerYear){
+      function asset(name,price,dividend,dividendsPerYear){
         this.name = name;
         this.price = price;
         this.dividend = dividend;
-        this.dividendsPerYear = dividendsPerYear
+        this.dividendsPerYear = dividendsPerYear;
+        this.quantity=0;
         this.livePrice = function(){
           //future live price function
           //No longer the future!
-          this.price = getQuote(this.name);
+          this.price = getQuote(this.name,key);
+        }
+        this.setQuantity = function(q){
+          this.quantity=q;
         }
         this.projectedMonthlyIncome = function(){
-          var yearly = this.dividend*this.dividendsPerYear;
+          var yearly = this.dividend*this.dividendsPerYear*this.quantity;
           var monthly = yearly/12;
           return monthly;
         }
       }
-    }
       function salary(amt){
         this.monthly = amt/12;
         this.yearly = amt;
       }
+      function returnQuote(x){
+        return x
+      }
       function getQuote(ticker,key){
         //Using an API to import a quote..
-        var quote = "";
         var requestURL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+ticker+'&apikey='+key+'';
         var request = new XMLHttpRequest();
-          request.open('GET', requestURL);
-          request.responseType='json';
+          request.open('GET', requestURL,true);
           request.onload=function(){
             var data = this.response;
             if(this.readyState==4&&this.status==200){
                 console.log(data["Global Quote"]["01. symbol"])
                 console.log(data["Global Quote"]["05. price"]);
                 console.log(data);
-                return data["Global Quote"]["05. price"];
+                var result = JSON.stringify(data["Global Quote"]["05. price"]);
               }
-            }
-        request.send();
+      }
+      request.send();
       }
       function resetPortfolio(){
                 var dare = prompt("ARE YOU SURE!? Y=1,N=0","0");
@@ -110,25 +133,49 @@
         tableEl.id="accountTable";
         var incomeText=document.createTextNode("Income Per Month:");
         var income = document.createTextNode(incomeChecker());
+        var acctSelector = document.createElement("select");
         tableEl.appendChild(incomeText);
         tableEl.appendChild(income);
-        for(i=0;i<=portfolio.length;i++){
+        for(i=0;i<portfolio.length;i++){
           var accountEl = document.createElement("div");
           if(portfolio[i]){
           accountEl.innerHTML=JSON.stringify(portfolio[i]);
           tableEl.appendChild(accountEl);
+          }
         }
+        for(i=0;i<portfolio.length;i++){
+          var option = document.createElement("option");
+          option.value=i;
+          option.innerHTML=portfolio[i].name;
+          acctSelector.appendChild(option);
         }
+        tableEl.appendChild(acctSelector);
         document.body.appendChild(tableEl);
       }
-      function addFinAccount(){
+      function bankFactory(){
         var a = document.getElementById("finAcctPlanner_Name").value;
-        var b = document.getElementById("finAcctPlanner_Institution").value;
-        var c = document.getElementById("finAcctPlanner_Balance").value;
-        var d = document.getElementById("finAcctPlanner_Apy").value;
-        var obj = new FinancialAccount(a,b,c,d);
+        var b = document.getElementById("finAcctPlanner_Balance").value;
+        var c = document.getElementById("finAcctPlanner_Apy").value;
+        var obj = new Bank(a,b,c);
         portfolio.push(obj);
         renderAccountTable();
+      }
+      function brokerFactory(){
+        var a = document.getElementById("finAcctPlanner_Name").value;
+        var b = document.getElementById("finAcctPlanner_Balance").value;
+        var c = document.getElementById("finAcctPlanner_Apy").value;
+        var obj = new Broker(a,b,c);
+        portfolio.push(obj);
+        renderAccountTable();
+      }
+      function addFinAccount(){
+        var a = document.getElementById("acctTypeSelect");
+        if(a.value==="Bank"){
+          bankFactory();
+        }
+        if(a.value==="Broker"){
+          brokerFactory();
+        }
       }
       function addFinancialAccountPlanner(){
         if(plannerOpen==1){
@@ -142,17 +189,12 @@
         obj.id="finAcctPlanner";
         obj.appendChild(document.createTextNode("Enter the Name, Institution, Balance, and APY of your new account.."));
         var nameObj=document.createElement("td");
-        var nameText=document.createTextNode("Name:");
+        var nameText=document.createTextNode("Bank/Broker:");
         var name = document.createElement("textarea");
         name.id="finAcctPlanner_Name";
         nameObj.appendChild(nameText);
         nameObj.appendChild(name);
         var instObj = document.createElement("td");
-        var institutionText=document.createTextNode("Bank:");
-        var institution = document.createElement("textarea");
-        institution.id="finAcctPlanner_Institution";
-        instObj.appendChild(institutionText);
-        instObj.appendChild(institution);
         var balObj = document.createElement("td");
         var balanceText=document.createTextNode("Balance");
         var balance = document.createElement("textarea");
@@ -165,6 +207,16 @@
         apy.id="finAcctPlanner_Apy"
         apyObj.appendChild(apyText);
         apyObj.appendChild(apy);
+        var acctType = document.createElement("select");
+        acctType.id="acctTypeSelect";
+        var opt1 = document.createElement("option");
+        opt1.value="Bank";
+        opt1.innerHTML="Bank";
+        var opt2 = document.createElement("option");
+        opt2.value="Broker";
+        opt2.innerHTML="Broker";
+        acctType.appendChild(opt1);
+        acctType.appendChild(opt2);
         var button = document.createElement("i");
         button.setAttribute('onclick','addFinAccount()');
         button.setAttribute('class',"material-icons md-60");
@@ -173,12 +225,10 @@
         obj.appendChild(instObj);
         obj.appendChild(balObj);
         obj.appendChild(apyObj);
+        obj.appendChild(acctType);
         obj.appendChild(button);
         document.body.appendChild(obj);
         }
-      }
-      function addBrokerageAccount(){
-        //Will Render a planner
       }
     </script>
     <style>
@@ -202,7 +252,11 @@
     </style>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
+    <link href="../stylesheets/stars.css"rel="stylesheet">
   </head>
   <body onload="renderToolBar()">
+    <div id="stars">
+    <div id="stars2">
+    <div id="stars3">
   </body>
 </html>
