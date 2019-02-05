@@ -3,8 +3,31 @@
     <script>
     var key = 'demo';
     var portfolio = [];
-    var tools = ["addFinancialAccountPlanner().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","renderAccountTable().history","resetPortfolio().power_settings_new","addBrokerageAccount().add_box"]
+    var tools = ["addFinancialAccountPlanner().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","renderAccountTable().history","resetPortfolio().power_settings_new"]
     var plannerOpen=0;
+      function setBalance(arrayLoc){
+        var a = prompt("Set Balance","0");
+        portfolio[arrayLoc].setBalance(a);
+        renderAccountTable();
+      }
+      function cardConstructor(id,titleData,data,arrayLoc){
+        //Three strings expected
+        var card = document.createElement("div");
+        card.id=id;
+        var title = document.createElement("h1");
+        title.innerHTML=titleData;
+        var p1 = document.createElement("p");
+        var text = document.createTextNode(data);
+        p1.appendChild(text);
+        var balanceButton = document.createElement("i");
+        balanceButton.innerHTML="add";
+        balanceButton.setAttribute("onclick","setBalance("+arrayLoc+")");
+        card.appendChild(title);
+        card.appendChild(p1);
+        card.appendChild(balanceButton);
+        card.setAttribute("class","card");
+        return card;
+      }
       function incomeChecker(){
         var inc = 0;
         for(i=0;i<portfolio.length;i++){
@@ -23,14 +46,19 @@
         this.accounts = accounts;
       }
       function Bank(name,balance,apy){
+      this.type="Bank";
       this.name = name;
       this.balance = balance;
       this.apy = apy;
       this.projectedMonthlyIncome = function(){
         return this.balance*this.apy/12;
       }
+      this.setBalance = function(amt){
+        this.balance=amt;
+      }
     }
       function Broker(name,balance,apy){
+        this.type="Broker";
         this.name = name;
         this.balance = balance;
         this.apy = apy;
@@ -125,6 +153,13 @@
         }
         document.body.appendChild(toolbar);
       }
+      function renderBankAccountCard(acct,arrayLoc){
+        var id = acct.name;
+        var title = acct.name;
+        var data = "Balance: "+acct.balance+", APY: "+acct.apy+", Income Per Month:"+acct.projectedMonthlyIncome()+"";
+        var cardObj = cardConstructor(id,title,data,arrayLoc);
+        return cardObj;
+      }
       function renderAccountTable(){
         var target = document.getElementById("accountTable");
         if(target){target.parentElement.removeChild(target);}
@@ -139,7 +174,12 @@
         for(i=0;i<portfolio.length;i++){
           var accountEl = document.createElement("div");
           if(portfolio[i]){
+            if(portfolio[i].type==="Bank"){
+              accountEl.appendChild(renderBankAccountCard(portfolio[i],i));
+            }
+            else{
           accountEl.innerHTML=JSON.stringify(portfolio[i]);
+        }
           tableEl.appendChild(accountEl);
           }
         }
@@ -230,8 +270,20 @@
         document.body.appendChild(obj);
         }
       }
+      function start(){
+        renderToolBar();
+        addFinancialAccountPlanner();
+        renderAccountTable();
+      }
     </script>
     <style>
+      .card{
+        border-style:ridge;
+        border-color:gold;
+        border-width: thin;
+        background-color:grey;
+        text-align:center;
+      }
       i{
         height:1em;
         width:1em;
@@ -259,7 +311,7 @@
       rel="stylesheet">
     <link href="../stylesheets/stars.css"rel="stylesheet">
   </head>
-  <body onload="renderToolBar()">
+  <body onload="start()">
     <div id="stars">
     <div id="stars2">
     <div id="stars3">
