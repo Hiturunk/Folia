@@ -28,6 +28,13 @@
         card.setAttribute("class","card");
         return card;
       }
+      function balanceChecker(){
+        var bal = 0;
+        for(i=0;i<portfolio.length;i++){
+          bal+=Number(portfolio[i].balance);
+        }
+        return bal;
+      }
       function incomeChecker(){
         var inc = 0;
         for(i=0;i<portfolio.length;i++){
@@ -166,11 +173,19 @@
         var folia = portfolio;
         var tableEl = document.createElement("div");
         tableEl.id="accountTable";
+        var income = document.createElement("tr");
         var incomeText=document.createTextNode("Income Per Month:");
-        var income = document.createTextNode(incomeChecker());
+        var incomeVal = document.createTextNode(incomeChecker());
+        income.appendChild(incomeText);
+        income.appendChild(incomeVal);
+        var balance = document.createElement("tr");
+        var balanceText = document.createTextNode("Net Worth:")
+        var balanceVal = document.createTextNode(balanceChecker());
+        balance.appendChild(balanceText);
+        balance.appendChild(balanceVal);
         var acctSelector = document.createElement("select");
-        tableEl.appendChild(incomeText);
         tableEl.appendChild(income);
+        tableEl.appendChild(balance);
         for(i=0;i<portfolio.length;i++){
           var accountEl = document.createElement("div");
           if(portfolio[i]){
@@ -293,6 +308,9 @@
         border-style:inset;
         border-color:black;
         background-color:#9999FF;
+        margin:auto;
+        text-align: center;
+        display:block;
       }
       .material-icons.md-60 { font-size: 60px; }
       #finAcctPlanner{
@@ -300,11 +318,26 @@
         border-width:thin;
         border-color:black;
         border-style: ridge;
+        display:block;
       }
       #accountTable{
         background-color:white;
         border-style:gold;
         border-width:thin;
+        display:block;
+      }
+      #accountTable td{
+        border-width:thin;
+        margin: 0.5em;
+      }
+      #titleBar{
+        background-color:white;
+        border-color:gold;
+        align-self:center;
+        text-align: center;
+        display:block;
+        color:#9999FF;
+        margin:auto;
       }
     </style>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
@@ -312,6 +345,7 @@
     <link href="../stylesheets/stars.css"rel="stylesheet">
   </head>
   <body onload="start()">
+    <h1 id="titleBar">FOLIA</h1>
     <div id="stars">
     <div id="stars2">
     <div id="stars3">
