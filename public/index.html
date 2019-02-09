@@ -157,6 +157,9 @@
           bal+=Number(f.portfolio[i].getNetWorth());
           console.log("Broker!");
           }
+          if(i>100){
+            return bal;
+          }
         }
         return bal;
   }
@@ -286,8 +289,6 @@
           request.onload=function(){
             var data = this.response;
             if(this.readyState==4&&this.status==200){
-                console.log(data["Global Quote"]["01. symbol"])
-                console.log(data["Global Quote"]["05. price"]);
                 console.log(data);
                 var result = JSON.stringify(data["Global Quote"]["05. price"]);
               }
