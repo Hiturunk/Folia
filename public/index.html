@@ -8,6 +8,15 @@
     var tools = ["loadFileAsker().account_balance","saveFileAsker().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","resetPortfolio().power_settings_new"]
     var plannerOpen=0;
     var stocksAdded=0;
+      function removeAccount(){
+        var key = prompt("Submit the name of the account to be removed","Capital One");
+        for(i=0;i<f.portfolio.length;i++){
+          if(f.portfolio[i].name==key){
+          f.portfolio.splice(i);
+        }
+      }
+      renderAccountTable();
+    }
       function setBalance(arrayLoc){
         var a = prompt("Set Balance","0");
         f.portfolio[arrayLoc].setBalance(a);
