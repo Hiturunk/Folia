@@ -2,14 +2,72 @@
   <head>
     <script>
     var key = 'demo';
-    var portfolio = [];
-    var tools = ["addFinancialAccountPlanner().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","renderAccountTable().history","resetPortfolio().power_settings_new"]
+    var f = {
+      portfolio:[]
+    }
+    var tools = ["loadFileAsker().account_balance","saveFileAsker().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","resetPortfolio().power_settings_new"]
     var plannerOpen=0;
     var stocksAdded=0;
       function setBalance(arrayLoc){
         var a = prompt("Set Balance","0");
-        portfolio[arrayLoc].setBalance(a);
+        f.portfolio[arrayLoc].setBalance(a);
         renderAccountTable();
+      }
+      function loadFile(file){
+        return localStorage.getItem(file);
+      }
+      function saveFile(file){
+        var a = JSON.stringify(f);
+        localStorage.setItem(file,a);
+        console.log("saved portfolio..");
+        return 1
+      }
+      function saveFileAsker(){
+        var ask = prompt("Name the file to be saved..","foliaMain");
+        saveFile(ask);
+      }
+      function loadFileAsker(){
+        var ask = prompt("Name the file to be loaded..","foliaMain");
+        var load = JSON.parse(loadFile(ask));
+        f.portfolio=[];
+        if(load){
+          for(i=0;i<load.portfolio.length;i++){
+            var account = load.portfolio[i];
+            if(account.type==="Bank"){
+              var instance = new Bank(account.name,account.balance,account.apy);
+              f.portfolio.push(instance);
+            }
+            if(account.type==="Broker"){
+              var instance = new Broker(account.name,account.balance,account.apy);
+              f.portfolio.push(instance);
+            }
+          }
+        }
+        renderAccountTable();
+      }
+      function checkforLoad(){
+        f.portfolio=[];
+        var load = JSON.parse(loadFile("foliaMain"));
+        if(load){
+          for(i=0;i<load.portfolio.length;i++){
+            var account = load.portfolio[i];
+            if(account.type==="Bank"){
+              var instance = new Bank(account.name,account.balance,account.apy);
+              f.portfolio.push(instance);
+            }
+            if(account.type==="Broker"){
+              var assetsTable = [];
+              var assets = account.assets;
+              for(j=0;j<assets.length;j++){
+                var asset = assets[j];
+                var instance = new Asset(asset.name,asset.price,asset.dividend,asset.dividendsPerYear,asset.quantity);
+                assetsTable.push(instance);
+              }
+              var instance = new Broker(account.name,account.balance,account.apy,assetsTable);
+              f.portfolio.push(instance);
+            }
+          }
+        }
       }
       function cardConstructor(id,titleData,data){
         //Three strings expected
@@ -42,11 +100,11 @@
         addStockButton.innerHTML="addBox";
         addStockButton.setAttribute("onclick","addStock("+arrayLoc+")");
         var stockList = document.createElement("ol");
-        var target = portfolio[arrayLoc].assets;
+        var target = f.portfolio[arrayLoc].assets;
         if(target.length>0){
         for(i=0;i<target.length;i++){
           var assetHTMLObj = document.createElement("li");
-          assetHTMLObj.innerHTML=JSON.stringify(portfolio[arrayLoc].assets[i]);
+          assetHTMLObj.innerHTML=JSON.stringify(f.portfolio[arrayLoc].assets[i]);
           stockList.appendChild(assetHTMLObj);
         }
       }
@@ -58,30 +116,32 @@
       function addStock(id){
         var question = prompt("Please enter the following, in order, seperated by commas: Ticker,Price,dividend,dividendsPerYear,sharesAmt","WMT,100,0.80,4,1");
         var strArr = question.split(",");
-        portfolio[id].addAsset(strArr[0],strArr[1],strArr[2],strArr[3],strArr[4]);
+        f.portfolio[id].addAsset(strArr[0],strArr[1],strArr[2],strArr[3],strArr[4]);
         renderAccountTable();
         stocksAdded=1;
       }
       function balanceChecker(){
         var bal = 0;
-        for(i=0;i<portfolio.length;i++){
-          if(portfolio[i].type="Bank"){
-          bal+=Number(portfolio[i].balance);
+        for(i=0;i<f.portfolio.length;i++){
+          if(f.portfolio[i].type="Bank"){
+          bal+=Number(f.portfolio[i].balance);
         }
         return bal;
   }
 }
       function stockVal(acct){
         var bal = 0;
-        for(j=0;j<portfolio[acct].assets;j++){
-          bal+=portfolio[i].assets[j].equity();
+        for(j=0;j<f.portfolio[acct].assets;j++){
+          bal+=f.portfolio[i].assets[j].equity();
           }
           return bal;
         }
       function incomeChecker(){
         var inc = 0;
-        for(i=0;i<portfolio.length;i++){
-          inc+=portfolio[i].projectedMonthlyIncome();
+        for(i=0;i<f.portfolio.length;i++){
+          if(f.portfolio[i]){
+          inc+=f.portfolio[i].projectedMonthlyIncome();
+        }
         }
         return inc;
       }
@@ -107,12 +167,17 @@
         this.balance=amt;
       }
     }
-      function Broker(name,balance,apy){
+      function Broker(name,balance,apy,assets){
         this.type="Broker";
         this.name = name;
         this.balance = balance;
         this.apy = apy;
+        if(assets){
+        this.assets = assets;
+        }
+        else{
         this.assets = [];
+        }
         //We will probably allow to pass an array of assets to the brokerageAccount constructor in the future..though this solution for now makes more sense..
         this.projectedMonthlyIncome = function(){
           var a = 0;
@@ -130,7 +195,7 @@
           return this.apy*this.balance/12;
         }
         this.addAsset = function(name,price,dividend,dividendsPerYear,shares){
-          var assetObj = new asset(name,price,dividend,dividendsPerYear,shares);
+          var assetObj = new Asset(name,price,dividend,dividendsPerYear,shares);
           this.assets.push(assetObj);
           console.log("asset added to"+this.name);
         }
@@ -142,7 +207,7 @@
           }
         }
       }
-      function asset(name,price,dividend,dividendsPerYear,sharesAmt){
+      function Asset(name,price,dividend,dividendsPerYear,sharesAmt){
         this.name = name;
         this.price = price;
         this.dividend = dividend;
@@ -191,7 +256,8 @@
       }
       function resetPortfolio(){
                 var dare = prompt("ARE YOU SURE!? Y=1,N=0","0");
-                if(dare==1){portfolio=[];renderAccountTable()}
+                if(dare==1){f.portfolio=[];renderAccountTable()}
+                saveFile("foliaMain");
       }
       function parseQuote(ticker,key){
       }
@@ -225,7 +291,7 @@
       function renderAccountTable(){
         var target = document.getElementById("accountTable");
         if(target){target.parentElement.removeChild(target);}
-        var folia = portfolio;
+        var acctTable = f.portfolio;
         var tableEl = document.createElement("div");
         tableEl.id="accountTable";
         var income = document.createElement("tr");
@@ -241,33 +307,34 @@
         var acctSelector = document.createElement("select");
         tableEl.appendChild(income);
         tableEl.appendChild(balance);
-        for(i=0;i<portfolio.length;i++){
+        for(i=0;i<f.portfolio.length;i++){
           var accountEl = document.createElement("div");
-          if(portfolio[i]){
-            if(portfolio[i].type==="Bank"){
-              accountEl.appendChild(renderBankAccountCard(portfolio[i],i));
+          if(f.portfolio[i]){
+            if(f.portfolio[i].type==="Bank"){
+              accountEl.appendChild(renderBankAccountCard(f.portfolio[i],i));
             }
-            if(portfolio[i].type==="Broker"){
-          accountEl.appendChild(renderBrokerAccountCard(portfolio[i],i));
+            if(f.portfolio[i].type==="Broker"){
+          accountEl.appendChild(renderBrokerAccountCard(f.portfolio[i],i));
         }
           tableEl.appendChild(accountEl);
           }
         }
-        for(j=0;j<portfolio.length;j++){
+        for(j=0;j<f.portfolio.length;j++){
           var option = document.createElement("option");
           option.value=j;
-          option.innerHTML=portfolio[j].name;
+          option.innerHTML=f.portfolio[j].name;
           acctSelector.appendChild(option);
         }
         tableEl.appendChild(acctSelector);
         document.body.appendChild(tableEl);
+        saveFile("foliaMain");
       }
       function bankFactory(){
         var a = document.getElementById("finAcctPlanner_Name").value;
         var b = document.getElementById("finAcctPlanner_Balance").value;
         var c = document.getElementById("finAcctPlanner_Apy").value;
         var obj = new Bank(a,b,c);
-        portfolio.push(obj);
+        f.portfolio.push(obj);
         renderAccountTable();
       }
       function brokerFactory(){
@@ -275,7 +342,7 @@
         var b = document.getElementById("finAcctPlanner_Balance").value;
         var c = document.getElementById("finAcctPlanner_Apy").value;
         var obj = new Broker(a,b,c);
-        portfolio.push(obj);
+        f.portfolio.push(obj);
         renderAccountTable();
       }
       function addFinAccount(){
@@ -341,6 +408,7 @@
         }
       }
       function startFolia(){
+        checkforLoad();
         renderToolBar();
         addFinancialAccountPlanner();
         renderAccountTable();
@@ -395,6 +463,7 @@
         margin:auto;
       }
     </style>
+    <script src="../javascripts/lodash.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet">
     <link href="../stylesheets/stars.css"rel="stylesheet">
