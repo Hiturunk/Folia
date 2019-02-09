@@ -92,6 +92,20 @@
         card.setAttribute("class","card");
         return card;
       }
+      function setStockQuantity(portfolioRef,assetRef){
+        var target=f.portfolio[portfolioRef].assets[assetRef];
+        var ask = prompt("Set Quantity of Shares..","1");
+        target.quantity=ask;
+        renderAccountTable();
+      }
+      function assetCard(id,titleData,data,portfolioLoc,arrayLoc){
+        var a = new cardConstructor(id,titleData,data);
+        var balanceButton = document.createElement("i");
+        balanceButton.innerHTML="add";
+        balanceButton.setAttribute("onclick","setStockQuantity("+portfolioLoc+","+arrayLoc+")");
+        a.appendChild(balanceButton);
+        return a;
+      }
       function bankCard(id,titleData,data,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
         var balanceButton = document.createElement("i");
@@ -112,8 +126,10 @@
         var target = f.portfolio[arrayLoc].assets;
         if(target.length>0){
         for(i=0;i<target.length;i++){
+          var asset = target[i];
           var assetHTMLObj = document.createElement("li");
-          assetHTMLObj.innerHTML=JSON.stringify(f.portfolio[arrayLoc].assets[i]);
+          assetHTMLObj.innerHTML=JSON.stringify(asset);
+          assetHTMLObj.appendChild(assetCard(asset.name,asset.name,asset.price+","+asset.dividend+","+asset.dividendsPerYear+","+ asset.quantity,arrayLoc,i))
           stockList.appendChild(assetHTMLObj);
         }
       }
@@ -132,12 +148,18 @@
       function balanceChecker(){
         var bal = 0;
         for(i=0;i<f.portfolio.length;i++){
-          if(f.portfolio[i].type="Bank"){
+          if(f.portfolio[i].type==="Bank"){
           bal+=Number(f.portfolio[i].balance);
+          console.log("bank!");
+        }
+          else if(f.portfolio[i].type==="Broker"){
+          bal+=Number(f.portfolio[i].balance);
+          bal+=Number(f.portfolio[i].getNetWorth());
+          console.log("Broker!");
+          }
         }
         return bal;
   }
-}
       function stockVal(acct){
         var bal = 0;
         for(j=0;j<f.portfolio[acct].assets;j++){
@@ -200,8 +222,17 @@
           a+=this.projectedMonthlyInterest();
           return a;
         }
-        this.projectedMonthlyInterest=function(){
+        this.projectedMonthlyInterest = function(){
           return this.apy*this.balance/12;
+        }
+        this.getNetWorth = function(){
+          var net = 0;
+          if(this.assets.length>0){
+            for(i=0;i<this.assets.length;i++){
+              net+= this.assets[i].equity();
+            }
+          }
+          return net;
         }
         this.addAsset = function(name,price,dividend,dividendsPerYear,shares){
           var assetObj = new Asset(name,price,dividend,dividendsPerYear,shares);
