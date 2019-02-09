@@ -253,10 +253,10 @@
           tableEl.appendChild(accountEl);
           }
         }
-        for(i=j;j<portfolio.length;j++){
+        for(j=0;j<portfolio.length;j++){
           var option = document.createElement("option");
-          option.value=i;
-          option.innerHTML=portfolio[i].name;
+          option.value=j;
+          option.innerHTML=portfolio[j].name;
           acctSelector.appendChild(option);
         }
         tableEl.appendChild(acctSelector);
