@@ -1,6 +1,7 @@
 <!doctype html>
   <head>
     <script>
+    var icons = "material-icons md-60"
     var key = 'demo';
     var f = {
       portfolio:[]
@@ -92,6 +93,24 @@
         card.setAttribute("class","card");
         return card;
       }
+      function optionsCardConstructor(id,titleData,data){
+        //Three strings expected
+        var card = document.createElement("div");
+        card.id=id;
+        var title = document.createElement("h1");
+        title.innerHTML=titleData;
+        var tr = document.createElement("tr");
+        for(i=0;i<data.length;i++){
+          var opt = data[i].split("_");
+          console.log(opt[0]+opt[1]);
+          var button = createIcon(opt[0],opt[1]);
+          tr.appendChild(button);
+        }
+        card.appendChild(title);
+        card.appendChild(tr);
+        card.setAttribute("class","card");
+        return card;
+      }
       function setStockQuantity(portfolioRef,assetRef){
         var target=f.portfolio[portfolioRef].assets[assetRef];
         var ask = prompt("Set Quantity of Shares..","1");
@@ -100,42 +119,40 @@
       }
       function assetCard(id,titleData,data,portfolioLoc,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var balanceButton = document.createElement("i");
-        balanceButton.innerHTML="add";
-        balanceButton.setAttribute("onclick","setStockQuantity("+portfolioLoc+","+arrayLoc+")");
+        var balanceButton = createIcon("setStockQuantity("+portfolioLoc+","+arrayLoc+")","add");
         a.appendChild(balanceButton);
+        a.setAttribute("class","assetCard");
         return a;
       }
       function bankCard(id,titleData,data,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var balanceButton = document.createElement("i");
-        balanceButton.innerHTML="add";
-        balanceButton.setAttribute("onclick","setBalance("+arrayLoc+")");
-        a.appendChild(balanceButton);
+        var buttonCard = optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_add"],[]);
+        a.appendChild(buttonCard);
+        a.setAttribute("class","bankCard");
         return a;
+      }
+      function createIcon(onclickCall,iconRef){
+        var icon = document.createElement("i");
+        icon.innerHTML=iconRef;
+        icon.setAttribute("onclick",onclickCall);
+        icon.setAttribute("class",icons);
+        return icon;
       }
       function brokerCard(id,titleData,data,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var balanceButton = document.createElement("i");
-        balanceButton.innerHTML="add";
-        balanceButton.setAttribute("onclick","setBalance("+arrayLoc+")");
-        var addStockButton = document.createElement("i");
-        addStockButton.innerHTML="addBox";
-        addStockButton.setAttribute("onclick","addStock("+arrayLoc+")");
+        var buttonCard = new optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_cached","addStock("+arrayLoc+")_add"]);
         var stockList = document.createElement("ol");
         var target = f.portfolio[arrayLoc].assets;
         if(target.length>0){
         for(i=0;i<target.length;i++){
           var asset = target[i];
-          var assetHTMLObj = document.createElement("li");
-          assetHTMLObj.innerHTML=JSON.stringify(asset);
-          assetHTMLObj.appendChild(assetCard(asset.name,asset.name,asset.price+","+asset.dividend+","+asset.dividendsPerYear+","+ asset.quantity,arrayLoc,i))
-          stockList.appendChild(assetHTMLObj);
+          var b = new assetCard(asset.name,asset.name,"Price:"+asset.price+", Dividend:"+asset.dividend+", Distributions Yearly:"+asset.dividendsPerYear+", Shares:"+ asset.quantity+", Equity:"+asset.equity(),arrayLoc,i)
+          stockList.appendChild(b);
         }
       }
         a.appendChild(stockList);
-        a.appendChild(addStockButton);
-        a.appendChild(balanceButton);
+        a.appendChild(buttonCard);
+        a.setAttribute("class","brokerCard");
         return a;
       }
       function addStock(id){
@@ -246,6 +263,7 @@
           for(i=0;i<=this.assets.length;i++){
             if(this.assets[i].name===id){
               this.assets.splice(i,1);
+              renderAccountTable();
             }
           }
         }
@@ -307,10 +325,7 @@
         toolbar.id="toolbar";
         for(i=0;i<tools.length;i++){
           var spl = tools[i].split('.');
-          var a = document.createElement("i");
-          a.setAttribute("onclick",spl[0]);
-          a.setAttribute("class","material-icons md-60");
-          a.innerHTML=spl[1];
+          var a = createIcon(spl[0],spl[1]);
           toolbar.appendChild(a);
         }
         document.body.appendChild(toolbar);
@@ -335,26 +350,28 @@
         var acctTable = f.portfolio;
         var tableEl = document.createElement("div");
         tableEl.id="accountTable";
-        var income = document.createElement("tr");
+        var info = document.createElement("tr");
+        var income = document.createElement("td");
         var incomeText=document.createTextNode("Income Per Month:");
         var incomeVal = document.createTextNode(incomeChecker());
         income.appendChild(incomeText);
         income.appendChild(incomeVal);
-        var balance = document.createElement("tr");
+        var balance = document.createElement("td");
         var balanceText = document.createTextNode("Net Worth:")
         var balanceVal = document.createTextNode(balanceChecker());
         balance.appendChild(balanceText);
         balance.appendChild(balanceVal);
         var acctSelector = document.createElement("select");
-        tableEl.appendChild(income);
-        tableEl.appendChild(balance);
+        info.appendChild(income);
+        info.appendChild(balance);
+        tableEl.appendChild(info);
         for(i=0;i<f.portfolio.length;i++){
           var accountEl = document.createElement("div");
-          if(f.portfolio[i]){
+          if(f.portfolio[i].type){
             if(f.portfolio[i].type==="Bank"){
               accountEl.appendChild(renderBankAccountCard(f.portfolio[i],i));
             }
-            if(f.portfolio[i].type==="Broker"){
+            else if(f.portfolio[i].type==="Broker"){
           accountEl.appendChild(renderBrokerAccountCard(f.portfolio[i],i));
         }
           tableEl.appendChild(accountEl);
@@ -456,16 +473,32 @@
       }
     </script>
     <style>
+      i{
+         -webkit-transition: all 1s ease-in-out; }
+      }
       .card{
+        border-style:inherit;
+        border-color:inherit;
+        border-width: inherit;
+        background-color:inherit;
+        text-align:center;
+        display:inline;
+      }
+      .bankCard{
         border-style:ridge;
         border-color:gold;
         border-width: thin;
         background-color:grey;
         text-align:center;
+        display:block;
       }
-      i{
-        height:1em;
-        width:1em;
+      .brokerCard{
+        border-style:ridge;
+        border-color:gold;
+        border-width: thin;
+        background-color:grey;
+        text-align:center;
+        display:block;
       }
       #toolbar{
         border-width:medium;
@@ -476,7 +509,14 @@
         text-align: center;
         display:block;
       }
-      .material-icons.md-60 { font-size: 60px; }
+      .material-icons.md-60 {
+         font-size: 4em;
+      }
+      .material-icons.md-60:hover{
+        font-size:6em;
+        outline:inset thick;
+        color:white;
+      }
       #finAcctPlanner{
         background-color:gold;
         border-width:thin;
@@ -488,11 +528,13 @@
         background-color:white;
         border-style:gold;
         border-width:thin;
-        display:block;
+        display:inline;
       }
-      #accountTable td{
+      #accountTable tr td{
         border-width:thin;
-        margin: 0.5em;
+        border-collapse: collapse;
+        border-style:dashed;
+        padding:1em 1em 1em 1em;
       }
       #titleBar{
         background-color:white;
@@ -502,6 +544,10 @@
         display:block;
         color:#9999FF;
         margin:auto;
+      }
+      .assetCard{
+        border: black ridge thin;
+        display:table-cell;
       }
     </style>
     <script src="../javascripts/lodash.js"></script>
