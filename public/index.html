@@ -1,10 +1,15 @@
 <!doctype html>
   <head>
     <script>
+    var x = 0;
     var icons = "material-icons md-60"
     var key = 'demo';
     var f = {
       portfolio:[]
+    }
+    f.removeAccount =function(y){
+            f.portfolio.splice(y,1);
+            render(x);
     }
     var tools = ["loadFileAsker().account_balance","saveFileAsker().account_balance","removeAccount().work_off","inputStockAPIKEY().youtube_searched_for","resetPortfolio().power_settings_new"]
     var plannerOpen=0;
@@ -16,12 +21,12 @@
           f.portfolio.splice(i);
         }
       }
-      renderAccountTable();
+      render(x);
     }
       function setBalance(arrayLoc){
         var a = prompt("Set Balance","0");
         f.portfolio[arrayLoc].setBalance(a);
-        renderAccountTable();
+        render(x);
       }
       function loadFile(file){
         return localStorage.getItem(file);
@@ -53,7 +58,7 @@
             }
           }
         }
-        renderAccountTable();
+        render(x);
       }
       function checkforLoad(){
         f.portfolio=[];
@@ -115,18 +120,20 @@
         var target=f.portfolio[portfolioRef].assets[assetRef];
         var ask = prompt("Set Quantity of Shares..","1");
         target.quantity=ask;
-        renderAccountTable();
+        render(x);
       }
       function assetCard(id,titleData,data,portfolioLoc,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var balanceButton = createIcon("setStockQuantity("+portfolioLoc+","+arrayLoc+")","add");
+        var balanceButton = createIcon("setStockQuantity("+portfolioLoc+","+arrayLoc+")","label");
+        var removeButton = createIcon("f.portfolio["+portfolioLoc+"].removeAsset("+arrayLoc+")","label_off");
         a.appendChild(balanceButton);
+        a.appendChild(removeButton);
         a.setAttribute("class","assetCard");
         return a;
       }
       function bankCard(id,titleData,data,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var buttonCard = optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_add"],[]);
+        var buttonCard = optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_add","f.removeAccount("+arrayLoc+")_backspace"]);
         a.appendChild(buttonCard);
         a.setAttribute("class","bankCard");
         return a;
@@ -140,7 +147,7 @@
       }
       function brokerCard(id,titleData,data,arrayLoc){
         var a = new cardConstructor(id,titleData,data);
-        var buttonCard = new optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_cached","addStock("+arrayLoc+")_add"]);
+        var buttonCard = new optionsCardConstructor("Options","Options",["setBalance("+arrayLoc+")_cached","addStock("+arrayLoc+")_add","f.removeAccount("+arrayLoc+")_backspace"]);
         var stockList = document.createElement("ol");
         var target = f.portfolio[arrayLoc].assets;
         if(target.length>0){
@@ -159,7 +166,7 @@
         var question = prompt("Please enter the following, in order, seperated by commas: Ticker,Price,dividend,dividendsPerYear,sharesAmt","WMT,100,0.80,4,1");
         var strArr = question.split(",");
         f.portfolio[id].addAsset(strArr[0],strArr[1],strArr[2],strArr[3],strArr[4]);
-        renderAccountTable();
+        render(x);
         stocksAdded=1;
       }
       function balanceChecker(){
@@ -259,11 +266,15 @@
           this.assets.push(assetObj);
           console.log("asset added to"+this.name);
         }
-        this.removeAsset = function(id){
+        this.removeAsset = function(stockIndex){
+          this.assets.splice(stockIndex,1);
+          render(x);
+        }
+        this.removeAssetByName = function(id){
           for(i=0;i<=this.assets.length;i++){
             if(this.assets[i].name===id){
               this.assets.splice(i,1);
-              renderAccountTable();
+              render(x);
             }
           }
         }
@@ -292,6 +303,11 @@
           return eq;
         }
       }
+      function Debt(name,balance,apr){
+        var b = balance * -1;
+        var apy = apr* -1;
+        this.call = new Bank(name,b,apy);
+      }
       function salary(amt){
         this.monthly = amt/12;
         this.yearly = amt;
@@ -315,7 +331,7 @@
       }
       function resetPortfolio(){
                 var dare = prompt("ARE YOU SURE!? Y=1,N=0","0");
-                if(dare==1){f.portfolio=[];renderAccountTable()}
+                if(dare==1){f.portfolio=[];render(x)}
                 saveFile("foliaMain");
       }
       function parseQuote(ticker,key){
@@ -344,7 +360,13 @@
         var cardObj = brokerCard(id,title,data,arrayLoc);
         return cardObj;
       }
-      function renderAccountTable(){
+      function changeView(){
+        var a = document.getElementById("acctSelector");
+        var b = a.options[a.selectedIndex].value;
+        x = b;
+        render(x);
+      }
+      function render(x){
         var target = document.getElementById("accountTable");
         if(target){target.parentElement.removeChild(target);}
         var acctTable = f.portfolio;
@@ -361,29 +383,31 @@
         var balanceVal = document.createTextNode(balanceChecker());
         balance.appendChild(balanceText);
         balance.appendChild(balanceVal);
-        var acctSelector = document.createElement("select");
         info.appendChild(income);
         info.appendChild(balance);
-        tableEl.appendChild(info);
-        for(i=0;i<f.portfolio.length;i++){
+
           var accountEl = document.createElement("div");
-          if(f.portfolio[i].type){
-            if(f.portfolio[i].type==="Bank"){
-              accountEl.appendChild(renderBankAccountCard(f.portfolio[i],i));
+          if(f.portfolio[x].type){
+            if(f.portfolio[x].type==="Bank"){
+              accountEl.appendChild(renderBankAccountCard(f.portfolio[x],x));
             }
-            else if(f.portfolio[i].type==="Broker"){
-          accountEl.appendChild(renderBrokerAccountCard(f.portfolio[i],i));
+            else if(f.portfolio[x].type==="Broker"){
+          accountEl.appendChild(renderBrokerAccountCard(f.portfolio[x],x));
         }
-          tableEl.appendChild(accountEl);
           }
-        }
+        var acctSelector = document.createElement("select");
+        acctSelector.setAttribute("onchange","changeView()");
+        acctSelector.id="acctSelector";
+        acctSelector.size="5";
         for(j=0;j<f.portfolio.length;j++){
           var option = document.createElement("option");
           option.value=j;
           option.innerHTML=f.portfolio[j].name;
           acctSelector.appendChild(option);
         }
-        tableEl.appendChild(acctSelector);
+        info.appendChild(acctSelector);
+        tableEl.appendChild(info);
+        tableEl.appendChild(accountEl);
         document.body.appendChild(tableEl);
         saveFile("foliaMain");
       }
@@ -393,7 +417,15 @@
         var c = document.getElementById("finAcctPlanner_Apy").value;
         var obj = new Bank(a,b,c);
         f.portfolio.push(obj);
-        renderAccountTable();
+        render(x);
+      }
+      function debtFactory(){
+        var a = document.getElementById("finAcctPlanner_Name").value;
+        var b = document.getElementById("finAcctPlanner_Balance").value;
+        var c = document.getElementById("finAcctPlanner_Apy").value;
+        var obj = new Debt(a,b,c);
+        f.portfolio.push(obj);
+        render(x);
       }
       function brokerFactory(){
         var a = document.getElementById("finAcctPlanner_Name").value;
@@ -401,7 +433,7 @@
         var c = document.getElementById("finAcctPlanner_Apy").value;
         var obj = new Broker(a,b,c);
         f.portfolio.push(obj);
-        renderAccountTable();
+        render(x);
       }
       function addFinAccount(){
         var a = document.getElementById("acctTypeSelect");
@@ -469,7 +501,7 @@
         checkforLoad();
         renderToolBar();
         addFinancialAccountPlanner();
-        renderAccountTable();
+        render(x);
       }
     </script>
     <style>
@@ -548,6 +580,16 @@
       .assetCard{
         border: black ridge thin;
         display:table-cell;
+      }
+      #acctSelector{
+        display:table-row;
+        text-decoration-style:wavy;
+        font-size:1em;
+      }
+      option{
+        display:table-cell;
+        border-spacing:1em;
+        border-style:groove;
       }
     </style>
     <script src="../javascripts/lodash.js"></script>
